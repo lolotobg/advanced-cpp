@@ -1,8 +1,0 @@
-VERSION
-{
-        global:
-                extern "C++" {
-                        library*;
-                };
-        local: *;
-};
