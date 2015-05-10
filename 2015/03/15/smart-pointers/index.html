@@ -51,9 +51,59 @@ removed from the language. It is fully replaced by <code>std::unique_ptr</code>
 without any drawbacks</p>
 </section><section><h2>A simplified implementation of <code>std::auto_ptr</code></h2>
 </section><section><h2>The &quot;smart pointer&quot; part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header smart_ptr footer"><code><pre>// loading ... </pre></code></div></section><section><h2>The RAII part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header RAII footer"><code><pre>// loading ... </pre></code></div></section><section><h2>The bad parts</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header copy-assign footer"><code><pre>// loading ... </pre></code></div></section><section><p>Due to the lack of move semantics in C++ 98, <code>std::auto_ptr</code> is forced
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header smart_ptr footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+class auto_ptr {
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* operator-&gt;()
+{
+	<span class="hljs-keyword">return</span> m_Pointer;
+}
+
+<span class="hljs-literal">T</span>&amp; operator* ()
+{
+	<span class="hljs-keyword">return</span> *m_Pointer;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h2>The RAII part</h2>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header RAII footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+class auto_ptr {
+// <span class="hljs-keyword">...</span>
+auto_ptr()
+	: m_Pointer(nullptr)
+{}
+
+auto_ptr(<span class="hljs-literal">T</span>* pointer)
+	: m_Pointer(pointer)
+{}
+
+~auto_ptr()
+{
+	delete m_Pointer;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h2>The bad parts</h2>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/auto_ptr.hxx" data-sections="header copy-assign footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+class auto_ptr {
+// <span class="hljs-keyword">...</span>
+// copy ctor changes the original!!!
+auto_ptr(auto_ptr&amp; o) : m_Pointer(o.m_Pointer) {
+	o.m_Pointer = nullptr;
+}
+
+// assignment changes the original!!!
+auto_ptr&amp; operator=(auto_ptr&amp; rhs) {
+	<span class="hljs-keyword">if</span> (this != &amp;rhs) {
+		delete m_Pointer;
+		m_Pointer = rhs.m_Pointer;
+		rhs.m_Pointer = nullptr;
+	}
+	<span class="hljs-keyword">return</span> *this;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><p>Due to the lack of move semantics in C++ 98, <code>std::auto_ptr</code> is forced
 to transfer the ownership of the pointer during copy construction and
 assignment. Also <code>std::auto_ptr</code> was copiable and assignable. You could
 make a <code>std::vector&lt;std::auto_ptr&gt;</code>, but it would be completely
@@ -67,10 +117,68 @@ guarantees for containers.</p>
 </ul>
 </section><section><h2>A simplified implementation of <code>std::unique_ptr</code></h2>
 </section><section><h2>The &quot;smart pointer&quot; part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header smart_ptr footer"><code><pre>// loading ... </pre></code></div></section><section><h2>The RAII part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header RAII footer"><code><pre>// loading ... </pre></code></div></section><section><h2>The non-copyable part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header copy footer"><code><pre>// loading ... </pre></code></div></section><section><h2>The move part</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header move footer"><code><pre>// loading ... </pre></code></div></section><section><h4><code>std::unique_ptr&lt;T&gt;</code> synopsis</h4>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header smart_ptr footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+struct unique_ptr {
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* operator-&gt;()
+{
+    <span class="hljs-keyword">return</span> m_Pointer;
+}
+
+<span class="hljs-literal">T</span>&amp; operator* ()
+{
+    <span class="hljs-keyword">return</span> *m_Pointer;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h2>The RAII part</h2>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header RAII footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+struct unique_ptr {
+// <span class="hljs-keyword">...</span>
+unique_ptr()
+    : m_Pointer(nullptr)
+{}
+
+unique_ptr(<span class="hljs-literal">T</span>* pointer)
+    : m_Pointer(pointer)
+{}
+
+~unique_ptr()
+{
+    delete m_Pointer;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h2>The non-copyable part</h2>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header copy footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+struct unique_ptr {
+// <span class="hljs-keyword">...</span>
+unique_ptr(const unique_ptr&amp; o) = delete;
+unique_ptr&amp; operator= (const unique_ptr&amp; rhs) = delete;
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h2>The move part</h2>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_ptr.hxx" data-sections="header move footer"><pre><code>template &lt;typename <span class="hljs-literal">T</span>&gt;
+struct unique_ptr {
+// <span class="hljs-keyword">...</span>
+unique_ptr(unique_ptr&amp;&amp; o)
+    : m_Pointer(o.m_Pointer)
+{
+    o.m_Pointer = nullptr;
+}
+
+unique_ptr&amp; operator=(unique_ptr&amp;&amp; rhs)
+{
+    <span class="hljs-keyword">if</span> (this != &amp;rhs) {
+        delete m_Pointer;
+        m_Pointer = rhs.m_Pointer;
+        rhs.m_Pointer = nullptr;
+    }
+    <span class="hljs-keyword">return</span> *this;
+}
+// <span class="hljs-keyword">...</span>
+<span class="hljs-literal">T</span>* m_Pointer;
+};</code></pre></div></section><section><h4><code>std::unique_ptr&lt;T&gt;</code> synopsis</h4>
 <ul>
 <li><code>unique_ptr()</code> default constructor</li>
 <li><code>unique_ptr(Y*)</code> constructor - allows using pointers to
@@ -116,9 +224,11 @@ class unique_ptr
 };
 </code></pre>
 </section><section><h2>Bad</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_array.cxx" data-sections="bad"><code><pre>// loading ... </pre></code></div><p>Will make a <code>delete</code> to memory allocated with <code>new []</code></p>
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_array.cxx" data-sections="bad"><pre><code><span class="hljs-symbol">std:</span><span class="hljs-symbol">:unique_ptr&lt;Lifetime&gt;</span> a(new <span class="hljs-constant">Lifetime[</span><span class="hljs-number">2</span>]);
+<span class="hljs-regexp">//std</span><span class="hljs-symbol">:</span><span class="hljs-symbol">:cout</span> &lt;&lt; <span class="hljs-string">"Second: "</span> &lt;&lt; &amp;a[<span class="hljs-number">1</span>] &lt;&lt; <span class="hljs-symbol">std:</span><span class="hljs-symbol">:endl</span>;</code></pre></div><p>Will make a <code>delete</code> to memory allocated with <code>new []</code></p>
 </section><section><h2>Good</h2>
-<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_array.cxx" data-sections="good"><code><pre>// loading ... </pre></code></div></section><section><p><code>T&amp; operator[](size_t index)</code> - allows array element access.  Only
+<div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/unique_array.cxx" data-sections="good"><pre><code><span class="hljs-symbol">std:</span><span class="hljs-symbol">:unique_ptr&lt;Lifetime[]&gt;</span> a(new <span class="hljs-constant">Lifetime[</span><span class="hljs-number">2</span>]);
+<span class="hljs-symbol">std:</span><span class="hljs-symbol">:cout</span> &lt;&lt; <span class="hljs-string">"Second: "</span> &lt;&lt; &amp;a[<span class="hljs-number">1</span>] &lt;&lt; <span class="hljs-symbol">std:</span><span class="hljs-symbol">:endl</span>;</code></pre></div></section><section><p><code>T&amp; operator[](size_t index)</code> - allows array element access.  Only
 <code>std::unique_ptr&lt;T[]&gt;</code> has this method.</p>
 </section><section><h2>Custom deleter</h2>
 <pre><code>struct ReleaseDelete {
@@ -131,11 +241,11 @@ class unique_ptr
 // ...
 std::unique_ptr&lt;ID3D11Device, ReleaseDelete&gt; device;
 </code></pre>
-</section><section><pre><code>Will be back to `unique_ptr` deleter when we get to:
-
-* template typedefs
-* template specialization
-</code></pre>
+</section><section><p>Will be back to <code>unique_ptr</code> deleter when we get to:</p>
+<ul>
+<li>template typedefs</li>
+<li>template specialization</li>
+</ul>
 </section><section><h2><code>std::unique_ptr</code> owns the resource it is pointing to</h2>
 <p>Use this to express ownership reletion between types</p>
 </section></section><section><section><h2><code>std::shared_ptr</code></h2>
@@ -164,7 +274,69 @@ q = t;  // pointer 0xff00 : rc 0, so it is deleted
 </section><section><h4>Implementation of <code>std::shared_ptr</code></h4>
 <p>The <em>reference count</em> and the <em>resource</em> need to be shared between all
 instances. So they have to be on the heap.</p>
-</section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="ctor dtor member"><code><pre>// loading ... </pre></code></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="RC"><code><pre>// loading ... </pre></code></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="copy"><code><pre>// loading ... </pre></code></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="move"><code><pre>// loading ... </pre></code></div></section><section><h3><code>shared_ptr</code> is for sharing</h3>
+</section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="ctor dtor member"><pre><code>SharedPtr()
+    : m_RC(nullptr)
+    , m_Pointer(nullptr)
+{}
+
+SharedPtr(<span class="hljs-literal">T</span>* pointer)
+    : m_RC(new int(<span class="hljs-number">1</span>))
+    , m_Pointer(pointer)
+{
+}
+// <span class="hljs-keyword">...</span>
+~SharedPtr()
+{
+    RemoveReference();
+}
+// <span class="hljs-keyword">...</span>
+int* m_RC;
+<span class="hljs-literal">T</span>* m_Pointer;</code></pre></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="RC"><pre><code><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">RemoveRefernce</span><span class="hljs-params">()</span>
+</span>{
+    <span class="hljs-keyword">if</span> (m_RC &amp;&amp; --*m_RC == <span class="hljs-number">0</span>)
+    {
+        <span class="hljs-keyword">delete</span> m_RC;
+    }
+}
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">AddReference</span><span class="hljs-params">()</span>
+</span>{
+    ++*m_RC;
+}</code></pre></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="copy"><pre><code>SharedPtr(<span class="hljs-keyword">const</span> SharedPtr&amp; o)
+    : m_RC(pointer.m_RC)
+    , m_Pointer(pointer.m_Pointer)
+{
+    AddReference();
+}
+
+SharedPtr&amp; operator=(<span class="hljs-keyword">const</span> SharedPtr&amp; rhs)
+{
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span> != &amp;rhs)
+    {
+        RemoveReference();
+        m_RC = rhs.m_RC;
+        m_Pointer = rhs.m_Pointer;
+        AddReference();
+    }
+    <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}</code></pre></div></section><section><div class="snippet" data-file="/advanced-cpp/slides/05_smartptr/shared_ptr.hxx" data-sections="move"><pre><code>SharedPtr(SharedPtr&amp;&amp; o)
+    : m_RC(pointer.m_RC)
+    , m_Pointer(pointer.m_Pointer)
+{
+    o.m_RC = <span class="hljs-keyword">nullptr</span>;
+    o.m_Pointer = <span class="hljs-keyword">nullptr</span>;
+}
+
+SharedPtr&amp; <span class="hljs-keyword">operator</span>=(SharedPtr&amp;&amp; rhs)
+{
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span> != &amp;rhs) {
+        RemoveReference();
+        m_RC = rhs.m_RC;
+        m_Pointer = rhs.m_Pointer;
+        rhs.m_RC = <span class="hljs-keyword">nullptr</span>;
+        rhs.m_Pointer = <span class="hljs-keyword">nullptr</span>;
+    }
+    <span class="hljs-keyword">return</span> *<span class="hljs-keyword">this</span>;
+}</code></pre></div></section><section><h3><code>shared_ptr</code> is for sharing</h3>
 <p>Use a <code>shared_ptr</code> to express that the ownership of the resource is shared.</p>
 </section><section><h3>Reference Counting and cycles</h3>
 <p>If you have a cycle in the references between resources in
@@ -214,12 +386,11 @@ class weak_ptr {
     // somewhere
 }
 </code></pre>
-</section><section><pre><code>#### As a static member?
-
-    std::shared_ptr&lt;int&gt; p = std::make_shared&lt;int&gt;(42);
-    std::shared_ptr&lt;int&gt; q = std::make_shared&lt;int&gt;(42);
-    // oops, p and q have reference count 2, but actually point to
-    // different resources
+</section><section><h4>As a static member?</h4>
+<pre><code>std::shared_ptr&lt;int&gt; p = std::make_shared&lt;int&gt;(42);
+std::shared_ptr&lt;int&gt; q = std::make_shared&lt;int&gt;(42);
+// oops, p and q have reference count 2, but actually point to
+// different resources
 </code></pre>
 </section><section><h4>In the heap as a shared object</h4>
 <p><img src="/advanced-cpp/slides/05_smartptr/shared_pointer.svg" alt="Shared Ptr"></p>
@@ -305,6 +476,6 @@ std::shared_ptr&lt;Renderer&gt; get_the_shared_ptr(Renderer* r)
 <li><code>std::make_shared&lt;T&gt;</code> is the best way to create a shared pointer</li>
 <li><code>C++</code>14 - <code>std::make_unique&lt;T&gt;</code> - creates an unique pointer</li>
 </ul>
-</section></article><div class="row-fluid"><div class="col-md-12"><hr><ul class="pagination"><li><a href="/advanced-cpp/2015/03/20/libraries/" title="Previous articles">&larr; Previous</a></li><li><a href="/advanced-cpp/2015/03/06/practice/" title="Next articles">Next &rarr;</a></li></ul></div></div></section></div><div class="col-sm-3"><nav role="navigation" class="navbar navbar-default"><div class="navbar-header"><div class="navbar-brand">Recent Posts</div></div><div class="clearfix"></div><ul class="nav navbar-stacked"><li><a href="/advanced-cpp/2015/05/03/sample-test/">Sample Test</a></li><li><a href="/advanced-cpp/2015/05/02/templates/">Templates</a></li><li><a href="/advanced-cpp/2015/04/20/test-exam-dates/">Test &amp; Exam dates</a></li><li><a href="/advanced-cpp/2015/04/14/locking-problem/">Locking problem</a></li><li><a href="/advanced-cpp/2015/04/03/functional/">Functional C++</a></li><li><a href="/advanced-cpp/2015/03/27/error-handling/">Error Handling</a></li><li><a href="/advanced-cpp/2015/03/20/namespaces/">Namespaces</a></li><li><a href="/advanced-cpp/2015/03/20/libraries/">Libraries</a></li></ul></nav></div></div><footer id="page-footer"><footer><div class="row-fluid"><div class="col-md-12"><a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" width="88px" height="31px" src="/advanced-cpp/images/cc-by-sa.png"></a><br><span>Advanced C++</span> by<span> SofiaC++</span> is licensed under a&nbsp;<a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International
+</section></article><div class="row-fluid"><div class="col-md-12"><hr><ul class="pagination"><li><a href="/advanced-cpp/2015/03/20/libraries/" title="Previous articles">&larr; Previous</a></li><li><a href="/advanced-cpp/2015/03/06/practice/" title="Next articles">Next &rarr;</a></li></ul></div></div></section></div><div class="col-sm-3"><nav role="navigation" class="navbar navbar-default"><div class="navbar-header"><div class="navbar-brand">Recent Posts</div></div><div class="clearfix"></div><ul class="nav navbar-stacked"><li><a href="/advanced-cpp/2015/05/07/templates-in-action/">Templates in Action</a></li><li><a href="/advanced-cpp/2015/05/03/sample-test/">Sample Test</a></li><li><a href="/advanced-cpp/2015/05/02/templates/">Templates</a></li><li><a href="/advanced-cpp/2015/04/20/test-exam-dates/">Test &amp; Exam dates</a></li><li><a href="/advanced-cpp/2015/04/14/locking-problem/">Locking problem</a></li><li><a href="/advanced-cpp/2015/04/03/functional/">Functional C++</a></li><li><a href="/advanced-cpp/2015/03/27/error-handling/">Error Handling</a></li><li><a href="/advanced-cpp/2015/03/20/namespaces/">Namespaces</a></li></ul></nav></div></div><footer id="page-footer"><footer><div class="row-fluid"><div class="col-md-12"><a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" width="88px" height="31px" src="/advanced-cpp/images/cc-by-sa.png"></a><br><span>Advanced C++</span> by<span> SofiaC++</span> is licensed under a&nbsp;<a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International
 License
-</a></div></div></footer><script src="/advanced-cpp/bower_components/jquery/dist/jquery.min.js"></script><script src="/advanced-cpp/bower_components/bootstrap/dist/js/bootstrap.min.js"></script></footer></div></body></html>
+</a></div></div></footer><script src="/advanced-cpp/bower_components/jquery/dist/jquery.min.js"></script><script src="/advanced-cpp/bower_components/bootstrap/dist/js/bootstrap.min.js"></script><script src="/advanced-cpp/snippet.js"></script></footer></div></body></html>

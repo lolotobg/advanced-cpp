@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="description" content="A course about C++"><meta name="author" content="SofiaCPP"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><link rel="stylesheet" href="/advanced-cpp/bower_components/reveal.js/css/reveal.min.css"/><link rel="stylesheet" href="/advanced-cpp/css/advanced_cxx.css"><link rel="stylesheet" href="/advanced-cpp/css/tomorrow.css"><title>Error handling</title></head><body><div class="reveal"><div class="slides"><section><h1>Error handling & exceptions</h1></section><section><h2>Contents</h2><ul><li>"manual error handling"</li><li>exception based</li><li>std::error_code</li><li>std::optional</li><li>logging (& context)</li></ul></section><section><section><h2>"Manual Error Handling"</h2></section><section><h2>Methods</h2><ul><li>global error code - errno, ::glError</li><li>special return values, HRESULT</li></ul></section><section><h2 id="Global_Error_Code-1">Global Error Code</h2>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="description" content="A course about C++"><meta name="author" content="SofiaCPP"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><link rel="stylesheet" href="/advanced-cpp/bower_components/reveal.js/css/reveal.min.css"/><link rel="stylesheet" href="/advanced-cpp/css/advanced_cxx.css"><link rel="stylesheet" href="/advanced-cpp/css/tomorrow.css"><title>Error handling</title></head><body><div class="reveal"><div class="slides"><section><h1>Error handling & exceptions</h1></section><section><h2>Contents</h2><ul><li>"manual error handling"</li><li>exception based</li><li>std::error_code</li><li>std::optional</li><li>logging (& context)</li></ul></section><section><section><h2>"Manual Error Handling"</h2></section><section><h2>Methods</h2><ul><li>global error code - errno, ::glError</li><li>special return values, HRESULT</li></ul></section><section><h2 id="Global_Error_Code">Global Error Code</h2>
 <ul>
 <li>Windows - <code>::GetLastError()</code></li>
 <li>POSIX - <code>errno</code>, <code>perror()</code></li>
@@ -24,7 +24,7 @@ auto has_error = ::CreateFileMapping(file, NULL, PAGE_READWRITE,
     0, 0, 0, &amp;handle);
 if (has_error) {
     auto error = ::GetLastError();
-    std::cout &lt;&lt; &quot;Creating file mapping: &quot; &lt;&lt; error&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Creating file mapping: &quot; &lt;&lt; error &lt;&lt; std::endl;
     return;
 }
 POINTER memory;
@@ -34,13 +34,13 @@ if (has_error) {
     auto error = ::GetLastError();
     std::cout &lt;&lt; &quot;Error mapping view: &quot; &lt;&lt; error &lt;&lt; std::endl;
 }
-</code></pre></section><section><h2 id="And_all_we_wanted_was-1">And all we wanted was</h2>
+</code></pre></section><section><h2 id="And_all_we_wanted_was">And all we wanted was</h2>
 <pre class="mstretch"><code>auto handle = ::CreateFileMapping(file, NULL, PAGE_READWRITE,
     0, 0, 0);
 /*
 if (!handle) {
     auto error = ::GetLastError();
-    std::cout &lt;&lt; &quot;Creating file mapping: &quot; &lt;&lt; error&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Creating file mapping: &quot; &lt;&lt; error &lt;&lt; std::endl;
     return;
 }
 */
@@ -51,30 +51,30 @@ if (!memory) {
     std::cout &lt;&lt; &quot;Error mapping view: &quot; &lt;&lt; error &lt;&lt; std::endl;
 }
 */
-</code></pre></section><section><h2 id="Last_error-1"><em>Last</em> error</h2>
+</code></pre></section><section><h2 id="Last_error"><em>Last</em> error</h2>
 <pre class="mstretch"><code>auto handle = ::CreateFileMapping(file, NULL, PAGE_READWRITE,
     0, 0, 0);
 auto memory = ::MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
-/*
+
 if (!memory) {
     auto error = ::GetLastError();
     std::cout &lt;&lt; &quot;Error mapping view: &quot; &lt;&lt; error &lt;&lt; std::endl;
 }</code></pre><p>Which error is that?</p>
-</section><section><h2 id="OpenGL_-_glGetError()-1">OpenGL - <code>glGetError()</code></h2>
+</section><section><h2 id="OpenGL_-_glGetError()">OpenGL - <code>glGetError()</code></h2>
 <pre class="mstretch"><code>auto handle = ::CreateFileMapping(file, NULL, PAGE_READWRITE,
     0, 0, 0);
 auto memory = ::MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
-/*
+
 if (!memory) {
     auto error = ::GetLastError();
     std::cout &lt;&lt; &quot;Error mapping view: &quot; &lt;&lt; error &lt;&lt; std::endl;
 }</code></pre><p>Which error is that?</p>
-</section><section><h2 id="Multithreading-1">Multithreading</h2>
+</section><section><h2 id="Multithreading">Multithreading</h2>
 <ul>
 <li><code>::GetLastError()</code> and <code>errno</code> are thread-local -
 they have a separate value for each thread in the process</li>
 </ul>
-</section><section><h2 id="Issues_with_manual_error_hanlding-1">Issues with manual error hanlding</h2>
+</section><section><h2 id="Issues_with_manual_error_hanlding">Issues with manual error hanlding</h2>
 <ul>
 <li>it is very easy to skip the check for error</li>
 <li>needs special error values</li>
@@ -122,10 +122,10 @@ is executed.</li>
 <li>If there is no matching clause the search goes to the
 function that called the current function and so on.</li>
 </ul>
-</section><section><h3 id="std::exception_hierarchy-1"><code>std::exception</code> hierarchy</h3>
+</section><section><h3 id="std::exception_hierarchy"><code>std::exception</code> hierarchy</h3>
 <p><code>std::exception</code> is the base class of all standard C++
 exceptions</p>
-</section><section><h3 id="std::exception-1"><code>std::exception</code></h3>
+</section><section><h3 id="std::exception"><code>std::exception</code></h3>
 <pre class="mstretch"><code>class exception {
 public:
     const char* what() const {
@@ -148,22 +148,22 @@ public:
 <li><code>std::runtime_error</code></li>
 </ul>
 </section><section><p>Custom exceptions should be derived from <code>std::exception</code></p>
-</section><section><h3 id="Throw_by_value_catch_by_reference-1"><em>Throw by value catch by reference</em></h3>
-<h2 id="NEVER_catch_exceptions_by_value-1"><strong>NEVER</strong> catch exceptions by value</h2>
+</section><section><h3 id="Throw_by_value_catch_by_reference"><em>Throw by value catch by reference</em></h3>
+<h2 id="NEVER_catch_exceptions_by_value"><strong>NEVER</strong> catch exceptions by value</h2>
 <pre class="mstretch"><code>catch (std::exception e) {
     // e just got &quot;sliced&quot;
     // the derived object got cut off
 }
-</code></pre></section><section><h3 id="Catching_derived_classes-1">Catching derived classes</h3>
+</code></pre></section><section><h3 id="Catching_derived_classes">Catching derived classes</h3>
 <pre class="mstretch"><code>catch (std::exception&amp; e) {
     std::cout &lt;&lt; e.what() &lt;&lt; std::endl;
 }
 
-</code></pre></section><section><h3 id="std::terminate-1"><code>std::terminate</code></h3>
+</code></pre></section><section><h3 id="std::terminate"><code>std::terminate</code></h3>
 <p><code>std::terminate</code> calls the currently installed
 <code>std::terminate_handler</code>. The default
 <code>std::terminate_handler</code> calls <code>std::abort</code></p>
-</section><section><h3 id="Stack_Unwinding-1">Stack Unwinding</h3>
+</section><section><h3 id="Stack_Unwinding">Stack Unwinding</h3>
 <p>The process of destroying the stack frames until the
 appropriate <em>catch clause</em> is found.</p>
 <p>During this process all destructors of automatic variables are
@@ -172,7 +172,7 @@ executed. This allows for freeing any resources.</p>
 <p>Throwing an exception during <em>stack unwinding</em> is going to
 call <code>std::terminate()</code>. This is the reason to consider
 destructors that throw exceptions a bad practice.</p>
-</section><section><h3 id="What_to_do_with_the_exception?-1">What to do with the exception?</h3>
+</section><section><h3 id="What_to_do_with_the_exception?">What to do with the exception?</h3>
 <ul>
 <li>let the program/user know that something has failed</li>
 <li>try again</li>
@@ -181,7 +181,7 @@ destructors that throw exceptions a bad practice.</p>
 <li>throw another exception</li>
 <li>stop the program</li>
 </ul>
-</section><section><h3 id="std::terminate_is_called_when_--1"><code>std::terminate</code> is called when ...</h3>
+</section><section><h3 id="std::terminate_is_called_when_-"><code>std::terminate</code> is called when ...</h3>
 </section><section><ol><li>an exception is thrown and not caught</li><li>an exception is thrown during stack unwinding</li><li>the ctor or dtor of a static or thread-local object throws
 an exception</li><li>a function registered with<code>std::exit</code>or<code>std::at_quick_exit</code>throws an exception</li><li>a noexcept specification is violated</li></ol></section><section><ol start="6"><li>a dynamic exception specification is violated and the
 default handler for<code>std::unexcepted</code>is executed</li><li>a non-default handler for std::unexpected throws an
@@ -195,26 +195,26 @@ appropriate catch clause</li><li class="fragment fade-in">If there is no such ca
 clause</li><li class="fragment fade-in">The catch clause is executed</li></ol></section><section><h2>Exception Safety</h2><p>A set of guidelines that class library implementers and
 clients use when reasoning about exception handling safety in
 C++ programs.
-</p></section><section><h2 id="Exception_Safety_Guarantees-1">Exception Safety Guarantees</h2>
+</p></section><section><h2 id="Exception_Safety_Guarantees">Exception Safety Guarantees</h2>
 <ul>
 <li><em>No-throw guarantee</em> - <em>failure transparency</em></li>
 <li><em>Strong exception safety</em> - <em>commit or rollback</em></li>
 <li><em>Basic exception safety</em> - <em>no-leak guarantee</em></li>
 <li><em>No exception safety</em></li>
 </ul>
-</section><section><h3 id="No-throw_guarantee-1"><em>No-throw</em> guarantee</h3>
+</section><section><h3 id="No-throw_guarantee"><em>No-throw</em> guarantee</h3>
 <p>Operations are guaranteed to succeed.
 All exceptions are handled internally and not visible to the
 client</p>
-</section><section><h3 id="Strong_exception_safety-1"><em>Strong exception safety</em></h3>
+</section><section><h3 id="Strong_exception_safety"><em>Strong exception safety</em></h3>
 <p>Operations can fail, but failed operations have no side
 effects, as if they didn&#39;t attempt to run at all.</p>
-</section><section><h3 id="Basic_exception_safety-1"><em>Basic exception safety</em></h3>
+</section><section><h3 id="Basic_exception_safety"><em>Basic exception safety</em></h3>
 <p>Operations can fail, failed operations might have side
 effects, but no invariants are broken.</p>
-</section><section><h3 id="No_exception_safety-1"><em>No exception safety</em></h3>
+</section><section><h3 id="No_exception_safety"><em>No exception safety</em></h3>
 <p>Oh, well, ...</p>
-</section><section><h3 id="How_to_write_exception_safe_code-1">How to write exception safe code</h3>
+</section><section><h3 id="How_to_write_exception_safe_code">How to write exception safe code</h3>
 <p>Follow the begin transaction/commit/rollback pattern</p>
 </section><section><pre class="mstretch"><code>// m_End points the last element of the vector
 void vector::push_back(T&amp; x) {
@@ -234,8 +234,8 @@ void vector::push_back(T&amp; x) {
         swap(*this, newvector);
     }
 }
-</code></pre></section><section><h3 id="Exception_specifiers-1">Exception specifiers</h3>
-</section><section><h2 id="Pros-1">Pros</h2>
+</code></pre></section><section><h3 id="Exception_specifiers">Exception specifiers</h3>
+</section><section><h2 id="Pros-2">Pros</h2>
 <ul>
 <li>Separete program logic from error handling</li>
 <li>They can&#39;t be ignored.</li>
@@ -249,7 +249,7 @@ occur<ul>
 </ul>
 </li>
 </ul>
-</section></section><section><section><h2>C++'11 error handling</h2></section><section><ul><li>std::error_code</li><li>std::optional</li><li>noexcept</li></ul></section><section><h3 id="std::error_code-1"><code>std::error_code</code></h3>
+</section></section><section><section><h2>C++'11 error handling</h2></section><section><ul><li>std::error_code</li><li>std::optional</li><li>noexcept</li></ul></section><section><h3 id="std::error_code"><code>std::error_code</code></h3>
 <ul>
 <li>Taken from <a href="http://www.boost.org/doc/libs/1_55_0/libs/system/doc/index.html" target="_blank" rel="external"><code>boost::system</code></a></li>
 </ul>
@@ -267,14 +267,14 @@ if (error)
 <li><code>std::error_code</code> is the platform-specific error</li>
 <li><code>std::errc::*</code> are platform-agnostic error conditions</li>
 </ul>
-</section><section><h3 id="How_to_add_a_custom_error_code-1">How to add a custom <code>error_code</code></h3>
+</section><section><h3 id="How_to_add_a_custom_error_code">How to add a custom <code>error_code</code></h3>
 <p><a href="http://blog.think-async.com/2010/04/system-error-support-in-c0x-part-1.html" target="_blank" rel="external">http://blog.think-async.com/2010/04/system-error-support-in-c0x-part-1.html</a></p>
-</section><section><h3 id="std::optional-1"><code>std::optional</code></h3>
+</section><section><h3 id="std::optional"><code>std::optional</code></h3>
 <ul>
 <li>Was expected in <code>C++</code>14</li>
 <li>Will become available as <em>Technical Report</em> or in <code>C++</code>17</li>
 </ul>
-</section><section><h3 id="boost::optional-1"><code>boost::optional</code></h3>
+</section><section><h3 id="boost::optional"><code>boost::optional</code></h3>
 <p>Allows to express that there is no such value.</p>
 <pre class="mstretch"><code>sqrt(-42); ///?
 </code></pre></section><section><pre class="mstretch"><code>template &lt;typename T&gt;
@@ -290,40 +290,40 @@ class optional {
     
     explicit operator bool();
 };
-</code></pre></section></section><section><section><h2 id="Logging-2">Logging</h2>
-<p>Having only an error (with an callstack if we are lucky) often
+</code></pre></section></section><section><section><h2 id="Logging">Logging</h2>
+<p>Having only an error (with a callstack if we are lucky) often
 is not enough.</p>
 <p>Logging is essential for understanding what is going on with the
 program.</p>
-</section><section><h3 id="Logging-3">Logging</h3>
+</section><section><h3 id="Logging-1">Logging</h3>
 <ul>
 <li>There is no standard <code>C++</code> library for logging.</li>
 </ul>
-</section><section><h3 id="Choosing_a_logging_library-1">Choosing a logging library</h3>
+</section><section><h3 id="Choosing_a_logging_library">Choosing a logging library</h3>
 <ul>
 <li>Logging is an aspect of the program</li>
 <li>It crawls all over the place</li>
 </ul>
-</section><section><h3 id="Logging_libraries-1">Logging libraries</h3>
+</section><section><h3 id="Logging_libraries">Logging libraries</h3>
 <ul>
 <li><a href="https://code.google.com/p/google-glog/" target="_blank" rel="external">glog</a></li>
 <li><a href="http://www.boost.org/doc/libs/1_55_0/libs/log/doc/html/index.html" target="_blank" rel="external">boost log</a></li>
 <li>roll your own (at least for fun)</li>
 </ul>
-</section><section><h3 id="Criteria-1">Criteria</h3>
+</section><section><h3 id="Criteria">Criteria</h3>
 <ul>
 <li>Severities, may be even facilities</li>
 <li>log rotation</li>
 <li>compile time and run-time impact</li>
 </ul>
-</section><section><h3 id="What_to_log?-1">What to log?</h3>
+</section><section><h3 id="What_to_log?">What to log?</h3>
 <ul>
 <li>Not too much (it is not free), but enough to understand what
 is going on.</li>
 <li>All important points in the lifetime of the application.</li>
 <li>Log only in case of errors - <a href="http://bitsquid.blogspot.com/2012/01/sensible-error-handling-part-1.html" target="_blank" rel="external">error context</a></li>
 </ul>
-</section></section><section><section><h2>Crash reporting</h2><p>At the end there may be crashes in the application</p></section><section><h3 id="Breakpad-1"><a href="https://code.google.com/p/google-breakpad/" target="_blank" rel="external">Breakpad</a></h3>
+</section></section><section><section><h2>Crash reporting</h2><p>At the end there may be crashes in the application</p></section><section><h3 id="Breakpad"><a href="https://code.google.com/p/google-breakpad/" target="_blank" rel="external">Breakpad</a></h3>
 <ul>
 <li>portable</li>
 <li>allows automatic crash dump analysis</li>
